@@ -5,7 +5,7 @@ A Swift adaptation of SwipeView
 
 The original [SwipeView](https://github.com/nicklockwood/SwipeView) is (c) 2010 by Nick Lockwood, and is licensed under something like the MIT license:
 
-From the original SwipeView:
+These docs are also adapted from the original SwipeView:
 
 Purpose
 --------------
