@@ -3,7 +3,7 @@ SwipeViewSwiftly
 
 A Swift adaptation of SwipeView
 
-The original [SwipeView](https://github.com/nicklockwood/SwipeView) is (c)2010 by Nick Lockwood, and is licensed under something like the MIT license:
+The original [SwipeView](https://github.com/nicklockwood/SwipeView) is (c) 2010 by Nick Lockwood, and is licensed under something like the MIT license:
 
 From the original SwipeView:
 
@@ -132,7 +132,7 @@ Methods
 
 The SwipeView class has the following publicly interesting methods, in addition to all the setter methods for the read-only properties above
 
-reloadData()
+    reloadData()
 
 This reloads all SwipeView item views from the dataSource and refreshes the display. Note that reloadData will reset the currentItemIndex back to zero, so if you want to retain the current scroll position, make a note of currentItemIndex before reloading and restore it afterwards. If you just wish to refresh the visible items without changing the number of items, consider calling `reloadItemAtIndex:` on all visible items instead.
 
