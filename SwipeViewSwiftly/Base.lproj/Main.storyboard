@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6254" systemVersion="14B25" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="BYZ-38-t0r">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6247"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+    </dependencies>
+    <scenes>
+        <!--View Controller-->
+        <scene sceneID="tne-QT-ifu">
+            <objects>
+                <viewController id="BYZ-38-t0r" customClass="ViewController" customModule="SwipeViewSwifty" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="y3c-jy-aDJ"/>
+                        <viewControllerLayoutGuide type="bottom" id="wfy-db-euE"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
+                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="HUF-Ku-Rhq" customClass="SwipeView" customModule="SwipeViewSwifty" customModuleProvider="target">
+                                <rect key="frame" x="0.0" y="48" width="600" height="552"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Swipe View Demo" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5eL-eb-JXM">
+                                <rect key="frame" x="231" y="19" width="139" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstItem="HUF-Ku-Rhq" firstAttribute="bottom" secondItem="wfy-db-euE" secondAttribute="top" id="6Hi-rd-Se7"/>
+                            <constraint firstItem="5eL-eb-JXM" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="topMargin" constant="19" id="B66-Vg-YD4"/>
+                            <constraint firstAttribute="trailing" secondItem="HUF-Ku-Rhq" secondAttribute="trailing" id="T9K-FM-Nfj"/>
+                            <constraint firstItem="HUF-Ku-Rhq" firstAttribute="top" secondItem="5eL-eb-JXM" secondAttribute="bottom" constant="8" symbolic="YES" id="cxT-Sx-OdU"/>
+                            <constraint firstItem="HUF-Ku-Rhq" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="cxk-Vo-E4R"/>
+                            <constraint firstItem="5eL-eb-JXM" firstAttribute="centerX" secondItem="HUF-Ku-Rhq" secondAttribute="centerX" id="dfa-Pj-zVF"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="swipeView" destination="HUF-Ku-Rhq" id="I1Q-DQ-urL"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
+            </objects>
+        </scene>
+    </scenes>
+</document>
