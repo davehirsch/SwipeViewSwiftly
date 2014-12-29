@@ -6,17 +6,7 @@ Version 1.0, December 27, 2014
 Adapted for Swift by David Hirsch on 12/27/14 from:
 SwipeView 1.3.2 ( https://github.com/nicklockwood/SwipeView )
 
-Copyright (C) 2014
-
-This software is provided 'as-is', without any express or implied warranty. In no event will the authors be held liable for any damages arising from the use of this software.
-
-Permission is granted to anyone to use this software for any purpose, including commercial applications, and to alter it and redistribute it freely, subject to the following restrictions:
-
-The origin of this software must not be misrepresented; you must not claim that you wrote the original software. If you use this software in a product, an acknowledgment in the product documentation would be appreciated but is not required.
-
-Altered source versions must be plainly marked as such, and must not be misrepresented as being the original software.
-
-This notice may not be removed or altered from any source distribution.
+This version Copyright (C) 2014, David Hirsch, licensed under MIT License.
 */
 
 import UIKit
@@ -96,46 +86,45 @@ protocol SwipeViewDataSource {
 
 class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
 
-    var scrollView: UIScrollView?
-    var itemViews: Dictionary<Int, UIView>?
-    var itemViewPool: Array<UIView>?
-    var previousItemIndex = 0
-    var previousContentOffset = CGPointMake(0, 0)
-    var itemSize = CGSizeMake(0, 0)
-    var suppressScrollEvent = false
-    var scrollDuration = 0.0
-    var scrolling = false
-    var startTime = 0.0
-    var lastTime = 0.0
-    var startOffset = 0.0 as CGFloat
-    var endOffset = 0.0 as CGFloat
-    var lastUpdateOffset = 0.0 as CGFloat
-    var timer: NSTimer?
+    private(set) var scrollView: UIScrollView?
+    private(set) var itemViews: Dictionary<Int, UIView>?
+    private(set) var itemViewPool: Array<UIView>?
+    private(set) var previousItemIndex = 0
+    private(set) var previousContentOffset = CGPointMake(0, 0)
+    private(set) var itemSize = CGSizeMake(0, 0)
+    private(set) var suppressScrollEvent = false
+    private(set) var scrollDuration = 0.0
+    private(set) var scrolling = false
+    private(set) var startTime = 0.0
+    private(set) var lastTime = 0.0
+    private(set) var startOffset = 0.0 as CGFloat
+    private(set) var endOffset = 0.0 as CGFloat
+    private(set) var lastUpdateOffset = 0.0 as CGFloat
+    private(set) var timer: NSTimer?
 
-    var dataSource: SwipeViewDataSource?    // cannot be connected in IB at this time; must do it in code
-    var delegate: SwipeViewDelegate?   // cannot be connected in IB at this time; must do it in code
-    var numberOfItems = 0
-    //var numberOfPages = 0
-    var itemsPerPage = 1
-    var truncateFinalPage = false
-    //var indexesForVisibleItems: Array<Int>?
-    //var visibleItemViews: Array<UIView>?
-    //var currentItemView: UIView?
-    var currentItemIndex = 0
-    //var currentPage = 0
-    var alignment = SwipeViewAlignment.Center
-    var scrollOffset = 0.0 as CGFloat
-    var pagingEnabled = true
-    var scrollEnabled = true
-    var wrapEnabled = false
-    var delaysContentTouches = true
-    var bounces = true
-    var decelerationRate = 0.0 as CGFloat
-    var autoscroll = 0.0 as CGFloat
-    var dragging = false
-    var decelerating = false
+    private(set) var dataSource: SwipeViewDataSource?    // cannot be connected in IB at this time; must do it in code
+    private(set) var delegate: SwipeViewDelegate?   // cannot be connected in IB at this time; must do it in code
+    private(set) var numberOfItems = 0
+    var numberOfPages : Int {
+        return Int(ceil(Double(numberOfItems) / Double(itemsPerPage)))
+    }
+
+    // These properties are set via setProperty methods.  Could probably put those in here as setters, but that could be ugly
+    private(set) var itemsPerPage = 1
+    private(set) var truncateFinalPage = false
+    private(set) var currentItemIndex = 0
+    private(set) var alignment = SwipeViewAlignment.Center
+    private(set) var scrollOffset = 0.0 as CGFloat
+    private(set) var pagingEnabled = true
+    private(set) var scrollEnabled = true
+    private(set) var wrapEnabled = false
+    private(set) var delaysContentTouches = true
+    private(set) var bounces = true
+    private(set) var decelerationRate = 0.0 as CGFloat
+    private(set) var autoscroll = 0.0 as CGFloat
+    private(set) var dragging = false
     var defersItemViewLoading = false
-    var vertical = false
+    private(set) var vertical = false
 
     
     required init(coder aDecoder: NSCoder) {
@@ -196,7 +185,7 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
         }
     }
     
-    func setDataSource(dataSource: SwipeViewDataSource?) {
+    func setDataSource(dataSource: SwipeViewDataSource) {
         // in original, we compared the old and new to see if they were changing.  Not clear how to do that in Swift
         self.dataSource = dataSource
         if (self.dataSource != nil) {
@@ -204,7 +193,7 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
         }
     }
     
-    func setDelegate(delegate: SwipeViewDelegate?) {
+    func setDelegate(delegate: SwipeViewDelegate) {
         // in original, we compared the old and new to see if they were changing.  Not clear how to do that in Swift
         self.delegate = delegate
         if (self.delegate != nil) {
@@ -348,15 +337,6 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
             }
         }
         return nil
-//        let allViews = self.itemViews!.values
-//        let foundViews = allViews.filter({$0 == view})
-//        let keys = foundViews.map({$0.0}) // doesn't work
-//        if (keys.array.isEmpty) {
-//            return nil
-//        } else {
-//            let goodKey = keys.array[0]
-//            return goodKey
-//        }
     }
 
     func indexOfItemViewOrSubview(view: UIView) -> Int? {
@@ -682,12 +662,6 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
     func clampedIndex(index: Int) -> Int {
         if (wrapEnabled) {
             if numberOfItems != 0 {
-//                let part0 = CGFloat(index) / CGFloat(numberOfItems)
-//                let part1 = CGFloat(floor(part0))
-//                let part2 = part1 * CGFloat(numberOfItems)
-//                let part3 = Int(part2)
-//                let part4 = index - part3
-//                return part4
                 return index - Int(CGFloat(floor(CGFloat(index) / CGFloat(numberOfItems))) * CGFloat(numberOfItems))
             } else {
                 return 0
@@ -733,15 +707,12 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
             && truncateFinalPage
             && !wrapEnabled
             && currentItemIndex > (numberOfItems / itemsPerPage - 1) * itemsPerPage) {
-                return numberOfPages() - 1
+                return numberOfPages - 1
         }
         return Int(round(Double(currentItemIndex) / Double(itemsPerPage)))
     }
     
-    func numberOfPages() -> Int {
-        return Int(ceil(Double(numberOfItems) / Double(itemsPerPage)))
-    }
-
+ 
     func minScrollDistanceFromIndex(fromIndex: Int, toIndex:Int) -> Int {
         let directDistance = toIndex - fromIndex
         if (wrapEnabled) {

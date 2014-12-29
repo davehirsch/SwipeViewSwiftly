@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		55B232371A51342800A7FC93 /* LICENSE.md in Resources */ = {isa = PBXBuildFile; fileRef = 55B232351A51342800A7FC93 /* LICENSE.md */; };
 		55ED62171A512D6F006CF782 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55ED62161A512D6F006CF782 /* AppDelegate.swift */; };
 		55ED62191A512D6F006CF782 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55ED62181A512D6F006CF782 /* ViewController.swift */; };
 		55ED621C1A512D6F006CF782 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 55ED621A1A512D6F006CF782 /* Main.storyboard */; };
@@ -27,6 +28,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		55B232351A51342800A7FC93 /* LICENSE.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
+		55B232361A51342800A7FC93 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		55ED62111A512D6F006CF782 /* SwipeViewSwiftly.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwipeViewSwiftly.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		55ED62151A512D6F006CF782 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		55ED62161A512D6F006CF782 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -61,6 +64,8 @@
 		55ED62081A512D6F006CF782 = {
 			isa = PBXGroup;
 			children = (
+				55B232351A51342800A7FC93 /* LICENSE.md */,
+				55B232361A51342800A7FC93 /* README.md */,
 				55ED62131A512D6F006CF782 /* SwipeViewSwiftly */,
 				55ED62291A512D6F006CF782 /* SwipeViewSwiftlyTests */,
 				55ED62121A512D6F006CF782 /* Products */,
@@ -197,6 +202,7 @@
 			files = (
 				55ED621C1A512D6F006CF782 /* Main.storyboard in Resources */,
 				55ED62211A512D6F006CF782 /* LaunchScreen.xib in Resources */,
+				55B232371A51342800A7FC93 /* LICENSE.md in Resources */,
 				55ED621E1A512D6F006CF782 /* Images.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

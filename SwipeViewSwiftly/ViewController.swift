@@ -6,17 +6,7 @@ Version 1.0, December 27, 2014
 Adapted for Swift by David Hirsch on 12/27/14 from:
 SwipeView 1.3.2 ( https://github.com/nicklockwood/SwipeView )
 
-Copyright (C) 2014
-
-This software is provided 'as-is', without any express or implied warranty. In no event will the authors be held liable for any damages arising from the use of this software.
-
-Permission is granted to anyone to use this software for any purpose, including commercial applications, and to alter it and redistribute it freely, subject to the following restrictions:
-
-The origin of this software must not be misrepresented; you must not claim that you wrote the original software. If you use this software in a product, an acknowledgment in the product documentation would be appreciated but is not required.
-
-Altered source versions must be plainly marked as such, and must not be misrepresented as being the original software.
-
-This notice may not be removed or altered from any source distribution.
+This version Copyright (C) 2014, David Hirsch, licensed under MIT License.
 */
 
 import UIKit
@@ -40,9 +30,9 @@ class ViewController: UIViewController, SwipeViewDataSource, SwipeViewDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
-        swipeView.delegate = self
-        swipeView.dataSource = self
-        swipeView.pagingEnabled = true
+        swipeView.setDelegate(self)
+        swipeView.setDataSource(self)
+        swipeView.setPagingEnabled(true)
     }
     
     override func didReceiveMemoryWarning() {
