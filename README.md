@@ -141,11 +141,11 @@ This reloads all SwipeView item views from the dataSource and refreshes the disp
 
 This method will reload the specified item view. The new item will be requested from the dataSource. Off-screen views will not be reloaded.
 
-    func indexesForVisibleItems() -> Array<Int> 
+    func indexesForVisibleItems() -> [Int] 
 
 Returns an array containing the indexes of all item views currently loaded and visible in the SwipeView. The array contains Ints whose values match the indexes of the views. The indexes for item views start at zero and match the indexes passed to the dataSource to load the view.
 
-    func visibleItemViews() -> Array<UIView>
+    func visibleItemViews() -> [UIView]
 
 Returns an array of all the item views currently displayed in the SwipeView. The indexes of views in this array do not match the item indexes, however the order of these views matches the order of the visibleItemIndexes array property, i.e. you can get the item index of a given view in this array by retrieving the equivalent object from the visibleItemIndexes array (or, you can just use the `indexOfItemView:` method, which is much easier).
 
@@ -262,6 +262,12 @@ If you wish to detect other types of interaction such as swipes, double taps or 
 
 Release Notes
 ----------------
+
+Version 1.1
+
+- Changed setter-functions into property observers
+- Made syntax more Swifty
+- Made scrollView non-optional
 
 Version 1.0
 
