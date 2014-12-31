@@ -36,7 +36,7 @@ Installation
 To use the SwipeView class in an app, just drag the SwipeView .swift (demo files and assets are not needed) into your project.  See ViewController.swift for guidelines on incorporating it into your app.
 
 
-Explicitly Settable Properties
+Settable Properties
 --------------
 
 The SwipeView has the following properties that are settable externally:
@@ -45,11 +45,6 @@ defersItemViewLoading: Bool
 
 Sometimes when your SwipeView contains very complex item views, or large images, there can be a noticeable jerk in scrolling performance as it loads the new views. Setting the `defersItemViewLoading` property to `true` forces the SwipeView to defer updating the currentItemIndex property and loading of new item views until after the scroll has finished. This can result in visible gaps in the SwipeView if you scroll too far in one go, but for scrolling short distances you may find that this improves animation performance.
 
-Read-Only Properties
---------------
-
-The SwipeView has the following properties that are read-only as properties, but are settable via `setPropertyName(newValue)` methods, or via delegate methods:
-
     dataSource: SwipeViewDataSource?
 
 An object that supports the SwipeViewDataSource protocol and can provide views to populate the SwipeView.  Currently this must be linked in code, not in Interface Builder.
@@ -57,18 +52,6 @@ An object that supports the SwipeViewDataSource protocol and can provide views t
     delegate: SwipeViewDelegate?
 
 An object that supports the SwipeViewDelegate protocol and can respond to SwipeView events and layout requests. Currently this must be linked in code, not in Interface Builder.
-
-    numberOfItems: Int
-
-The number of items in the SwipeView. To set this, implement the `numberOfItemsInSwipeView()` dataSource method. Note that not all of these item views will be loaded or visible at a given point in time - the SwipeView loads item views on demand as it scrolls.
-
-    numberOfPages : Int
-
-The number of pages in the SwipeView. To set this, implement the `numberOfItemsInSwipeView()` dataSource method and set the `itemsPerPage` value. If `itemsPerPage` = 1, numberOfPages will match the `numberOfItems`.
-
-    itemSize: CGSize
-
-The size of each item in the SwipeView. This property can be set using the `swipeViewItemSize()` delegate method.
 
     itemsPerPage: Int
 
@@ -125,6 +108,24 @@ Returns true if the SwipeView is currently being scrolled programatically.
     autoscroll: CGFloat
 
 This property can be used to set the SwipeView scrolling at a constant speed. A value of 1.0 would scroll the SwipeView forwards at a rate of one item per second. The autoscroll value can be positive or negative and defaults to 0.0 (stationary). Autoscrolling will stop if the user interacts with the SwipeView, and will resume when they stop.
+
+
+Read-Only Properties
+--------------
+
+The SwipeView has the following properties that are read-only as properties, but are settable via delegate methods:
+
+    itemSize: CGSize
+
+The size of each item in the SwipeView. This property can be set using the `swipeViewItemSize()` delegate method.
+
+    numberOfItems: Int
+
+The number of items in the SwipeView. To set this, implement the `numberOfItemsInSwipeView()` dataSource method. Note that not all of these item views will be loaded or visible at a given point in time - the SwipeView loads item views on demand as it scrolls.
+
+    numberOfPages : Int
+
+The number of pages in the SwipeView. To set this, implement the `numberOfItemsInSwipeView()` dataSource method and set the `itemsPerPage` value. If `itemsPerPage` = 1, numberOfPages will match the `numberOfItems`.
 
 
 Methods

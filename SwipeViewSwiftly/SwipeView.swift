@@ -2,7 +2,7 @@
 SwipeView.swift
 SwipeViewSwiftly
 
-Version 1.0, December 27, 2014
+Version 1.1, December 30, 2014
 Adapted for Swift by David Hirsch on 12/27/14 from:
 SwipeView 1.3.2 ( https://github.com/nicklockwood/SwipeView )
 
@@ -86,12 +86,12 @@ protocol SwipeViewDataSource {
 
 class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
 
-    private(set) var scrollView: UIScrollView?
-    private(set) var itemViews: Dictionary<Int, UIView>?
-    private(set) var itemViewPool: Array<UIView>?
+    private(set) var scrollView: UIScrollView
+    private(set) var itemViews: [Int: UIView]?
+    private(set) var itemViewPool: [UIView]?
     private(set) var previousItemIndex = 0
-    private(set) var previousContentOffset = CGPointMake(0, 0)
-    private(set) var itemSize = CGSizeMake(0, 0)
+    private(set) var previousContentOffset = CGPointZero
+    private(set) var itemSize = CGSizeZero
     private(set) var suppressScrollEvent = false
     private(set) var scrollDuration = 0.0
     private(set) var scrolling = false
@@ -101,43 +101,134 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
     private(set) var endOffset = 0.0 as CGFloat
     private(set) var lastUpdateOffset = 0.0 as CGFloat
     private(set) var timer: NSTimer?
-
-    private(set) var dataSource: SwipeViewDataSource?    // cannot be connected in IB at this time; must do it in code
-    private(set) var delegate: SwipeViewDelegate?   // cannot be connected in IB at this time; must do it in code
     private(set) var numberOfItems = 0
+    private(set) var scrollOffset = 0.0 as CGFloat
     var numberOfPages : Int {
         return Int(ceil(Double(numberOfItems) / Double(itemsPerPage)))
     }
 
-    // These properties are set via setProperty methods.  Could probably put those in here as setters, but that could be ugly
-    private(set) var itemsPerPage = 1
-    private(set) var truncateFinalPage = false
-    private(set) var currentItemIndex = 0
-    private(set) var alignment = SwipeViewAlignment.Center
-    private(set) var scrollOffset = 0.0 as CGFloat
-    private(set) var pagingEnabled = true
-    private(set) var scrollEnabled = true
-    private(set) var wrapEnabled = false
-    private(set) var delaysContentTouches = true
-    private(set) var bounces = true
-    private(set) var decelerationRate = 0.0 as CGFloat
-    private(set) var autoscroll = 0.0 as CGFloat
-    private(set) var dragging = false
+    //MARK: - Settable properties:
+    
     var defersItemViewLoading = false
-    private(set) var vertical = false
+    
+    var dataSource: SwipeViewDataSource? {   // cannot be connected in IB at this time; must do it in code
+        didSet {
+            if (dataSource != nil) {
+                reloadData()
+            }
+        }
+    }
+    var delegate: SwipeViewDelegate? {  // cannot be connected in IB at this time; must do it in code
+        didSet {
+            if (delegate != nil) {
+                setNeedsLayout()
+            }
+        }
+    }
+    var itemsPerPage: Int = 1 {
+        didSet {
+            if (itemsPerPage != oldValue) {
+                setNeedsLayout()
+            }
+        }
+    }
+    var truncateFinalPage: Bool = false {
+        didSet {
+            if (truncateFinalPage != oldValue) {
+                setNeedsLayout()
+            }
+        }
+    }
+    private(set) var currentItemIndex = 0
+    var alignment: SwipeViewAlignment = SwipeViewAlignment.Center {
+        didSet {
+            if (alignment != oldValue) {
+                setNeedsLayout()
+            }
+        }
+    }
+    var pagingEnabled: Bool = true {
+        didSet {
+            if (pagingEnabled != oldValue) {
+                self.scrollView.pagingEnabled = pagingEnabled
+                self.setNeedsLayout()
+            }
+        }
+    }
+    var scrollEnabled: Bool = true {
+        didSet {
+            if (scrollEnabled != oldValue) {
+                self.scrollView.scrollEnabled = scrollEnabled
+            }
+        }
+    }
+    var wrapEnabled: Bool = false {
+        didSet {
+            if (wrapEnabled != oldValue) {
+                let previousOffset = self.clampedOffset(self.scrollOffset)
+                scrollView.bounces = self.bounces && !wrapEnabled
+                self.setNeedsLayout()
+                self.scrollOffset = previousOffset
+            }
+        }
+    }
+    var delaysContentTouches: Bool = true {
+        didSet {
+            if (delaysContentTouches != oldValue) {
+                scrollView.delaysContentTouches = delaysContentTouches
+            }
+        }
+    }
+    var bounces: Bool = true {
+        didSet {
+            if (bounces != oldValue) {
+                scrollView.alwaysBounceHorizontal = !self.vertical && self.bounces
+                scrollView.alwaysBounceVertical = self.vertical && self.bounces
+                scrollView.bounces = self.bounces && !self.wrapEnabled
+            }
+        }
+    }
+    var decelerationRate: CGFloat = 0.0 {
+        didSet {
+            if (fabs(self.decelerationRate - oldValue) > 0.001) {
+                scrollView.decelerationRate = decelerationRate
+            }
+        }
+    }
+    var autoscroll: CGFloat = 0.0 {
+        didSet {
+            if (fabs(self.autoscroll - oldValue) > 0.001) {
+                if (autoscroll != 0) {
+                    self.startAnimation()
+                }
+            }
+        }
+    }
+    var vertical: Bool = false {
+        didSet {
+            if (vertical != oldValue) {
+                scrollView.alwaysBounceHorizontal = !self.vertical && self.bounces
+                scrollView.alwaysBounceVertical = self.vertical && self.bounces
+                self.setNeedsLayout()
+            }
+        }
+    }
 
     
+    //MARK: - Initialization
+    
     required init(coder aDecoder: NSCoder) {
-       super.init(coder: aDecoder)
+        self.scrollView = UIScrollView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))    // will be modified later
+        super.init(coder: aDecoder)
         setUp()
     }
     
     required override init(frame: CGRect) {
+        self.scrollView = UIScrollView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))    // will be modified later
         super.init(frame: frame)
         setUp()
     }
     
-    //MARK: - Initialization
     func setUp() {
        
         itemViews = Dictionary(minimumCapacity: 4)
@@ -145,33 +236,30 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
         
         self.clipsToBounds = true
 
-        self.scrollView = UIScrollView(frame: CGRectMake(0, 0, 100, 100))    // will be modified later
-        if let goodScrollView = self.scrollView {
-            goodScrollView.autoresizingMask = UIViewAutoresizing.FlexibleHeight | UIViewAutoresizing.FlexibleWidth
-            goodScrollView.autoresizesSubviews = true
-            goodScrollView.delegate = self
-            goodScrollView.delaysContentTouches = delaysContentTouches
-            goodScrollView.bounces = bounces && !wrapEnabled
-            goodScrollView.alwaysBounceHorizontal = !vertical && bounces
-            goodScrollView.alwaysBounceVertical = vertical && bounces
-            goodScrollView.pagingEnabled = pagingEnabled
-            goodScrollView.scrollEnabled = scrollEnabled
-            goodScrollView.decelerationRate = self.decelerationRate
-            goodScrollView.showsHorizontalScrollIndicator = false
-            goodScrollView.showsVerticalScrollIndicator = false
-            goodScrollView.scrollsToTop = false
-            goodScrollView.clipsToBounds = false
+        scrollView.autoresizingMask = UIViewAutoresizing.FlexibleHeight | UIViewAutoresizing.FlexibleWidth
+        scrollView.autoresizesSubviews = true
+        scrollView.delegate = self
+        scrollView.delaysContentTouches = delaysContentTouches
+        scrollView.bounces = bounces && !wrapEnabled
+        scrollView.alwaysBounceHorizontal = !vertical && bounces
+        scrollView.alwaysBounceVertical = vertical && bounces
+        scrollView.pagingEnabled = pagingEnabled
+        scrollView.scrollEnabled = scrollEnabled
+        scrollView.decelerationRate = self.decelerationRate
+        scrollView.showsHorizontalScrollIndicator = false
+        scrollView.showsVerticalScrollIndicator = false
+        scrollView.scrollsToTop = false
+        scrollView.clipsToBounds = false
 
-            decelerationRate = goodScrollView.decelerationRate
-            previousContentOffset = goodScrollView.contentOffset
-            
-            let tapGesture = UITapGestureRecognizer(target: self, action: "didTap")
-            tapGesture.delegate = self
-            goodScrollView.addGestureRecognizer(tapGesture)
-            
-            //place scrollview at bottom of hierarchy
-            self.insertSubview(goodScrollView, atIndex: 0)
-        }
+        decelerationRate = scrollView.decelerationRate
+        previousContentOffset = scrollView.contentOffset
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: "didTap")
+        tapGesture.delegate = self
+        scrollView.addGestureRecognizer(tapGesture)
+        
+        //place scrollview at bottom of hierarchy
+        self.insertSubview(scrollView, atIndex: 0)
         
         if self.dataSource != nil {
             reloadData()
@@ -185,114 +273,12 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
         }
     }
     
-    func setDataSource(dataSource: SwipeViewDataSource) {
-        // in original, we compared the old and new to see if they were changing.  Not clear how to do that in Swift
-        self.dataSource = dataSource
-        if (self.dataSource != nil) {
-            reloadData()
-        }
-    }
-    
-    func setDelegate(delegate: SwipeViewDelegate) {
-        // in original, we compared the old and new to see if they were changing.  Not clear how to do that in Swift
-        self.delegate = delegate
-        if (self.delegate != nil) {
-            self.setNeedsLayout()
-        }
-    }
-    
-    func setAlignment(alignment: SwipeViewAlignment) {
-        if self.alignment != alignment {
-            self.alignment = alignment
-            self.setNeedsLayout()
-        }
-    }
-    
-    func setItemsPerPage(itemsPerPage: Int) {
-        if self.itemsPerPage != itemsPerPage {
-            self.itemsPerPage = itemsPerPage
-            self.setNeedsLayout()
-        }
-    }
-   
-    func setTruncateFinalPage(truncateFinalPage: Bool) {
-        if self.truncateFinalPage != truncateFinalPage {
-            self.truncateFinalPage = truncateFinalPage
-            self.setNeedsLayout()
-        }
-    }
-    
-    func setScrollEnabled(scrollEnabled: Bool) {
-        if self.scrollEnabled != scrollEnabled {
-            self.scrollEnabled = scrollEnabled
-            self.scrollView?.scrollEnabled = scrollEnabled
-        }
-    }
-    
-    func setPagingEnabled(pagingEnabled: Bool) {
-        if self.pagingEnabled != pagingEnabled {
-            self.pagingEnabled = pagingEnabled
-            self.scrollView?.pagingEnabled = pagingEnabled
-            self.setNeedsLayout()
-
-        }
-    }
-    
-    func setWrapEnabled(wrapEnabled: Bool) {
-        if self.wrapEnabled != wrapEnabled {
-            let previousOffset = self.clampedOffset(self.scrollOffset)
-            self.wrapEnabled = wrapEnabled
-            scrollView?.bounces = self.bounces && !wrapEnabled
-            self.setNeedsLayout()
-            self.scrollOffset = previousOffset
-        }
-    }
-    
-    func setDelaysContentTouches(delaysContentTouches: Bool) {
-        self.delaysContentTouches = delaysContentTouches
-            scrollView?.delaysContentTouches = delaysContentTouches
-    }
-    
-    func setBounces(bounces: Bool) {
-        if self.bounces != bounces {
-            self.bounces = bounces
-            scrollView?.alwaysBounceHorizontal = !self.vertical && self.bounces
-            scrollView?.alwaysBounceVertical = self.vertical && self.bounces
-            scrollView?.bounces = self.bounces && !self.wrapEnabled
-        }
-    }
-
-    func setDecelerationRate(decelerationRate: CGFloat) {
-        if (fabs(self.decelerationRate - decelerationRate) > 0.001) {
-            self.decelerationRate = decelerationRate
-            scrollView?.decelerationRate = decelerationRate
-        }
-    }
-
-    func setAutoscroll(autoscroll: CGFloat) {
-        if (fabs(self.autoscroll - autoscroll) > 0.001) {
-            self.autoscroll = autoscroll
-            if (autoscroll != 0) {
-                self.startAnimation()
-            }
-        }
-    }
-
-    func setVertical(vertical: Bool) {
-        if self.vertical != vertical {
-            self.vertical = vertical
-            scrollView?.alwaysBounceHorizontal = !self.vertical && self.bounces
-            scrollView?.alwaysBounceVertical = self.vertical && self.bounces
-            self.setNeedsLayout()
-        }
-    }
-
     func isDragging() -> Bool? {
-        return scrollView?.dragging
+        return scrollView.dragging
     }
 
     func isDecelerating() -> Bool? {
-        return scrollView?.decelerating
+        return scrollView.decelerating
     }
    
     //MARK: - View management
@@ -362,64 +348,64 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
     
     //MARK: - View layout
     func updateScrollOffset () {
-        assert(scrollView != nil)
+        
         if (wrapEnabled)
         {
             let itemsWide = (numberOfItems == 1) ? 1.0: 3.0
             
             if (vertical)
             {
-                let scrollHeight = scrollView!.contentSize.height / CGFloat(itemsWide);
-                if (scrollView!.contentOffset.y < scrollHeight)
+                let scrollHeight = scrollView.contentSize.height / CGFloat(itemsWide);
+                if (scrollView.contentOffset.y < scrollHeight)
                 {
                     previousContentOffset.y += scrollHeight;
-                    setContentOffsetWithoutEvent(CGPointMake(0.0, scrollView!.contentOffset.y + scrollHeight))
+                    setContentOffsetWithoutEvent(CGPoint(x: 0.0, y: scrollView.contentOffset.y + scrollHeight))
                 }
-                else if (scrollView!.contentOffset.y >= scrollHeight * 2.0)
+                else if (scrollView.contentOffset.y >= scrollHeight * 2.0)
                 {
                     previousContentOffset.y -= scrollHeight;
-                    setContentOffsetWithoutEvent(CGPointMake(0.0, scrollView!.contentOffset.y - scrollHeight))
+                    setContentOffsetWithoutEvent(CGPoint(x: 0.0, y: scrollView.contentOffset.y - scrollHeight))
                 }
                 scrollOffset = clampedOffset(scrollOffset)
             }
             else
             {
-                let scrollWidth = scrollView!.contentSize.width / CGFloat(itemsWide)
-                if (scrollView!.contentOffset.x < scrollWidth)
+                let scrollWidth = scrollView.contentSize.width / CGFloat(itemsWide)
+                if (scrollView.contentOffset.x < scrollWidth)
                 {
                     previousContentOffset.x += scrollWidth;
-                    setContentOffsetWithoutEvent(CGPointMake(scrollView!.contentOffset.x + scrollWidth, 0.0))
+                    setContentOffsetWithoutEvent(CGPoint(x: scrollView.contentOffset.x + scrollWidth, y: 0.0))
                 }
-                else if (scrollView!.contentOffset.x >= scrollWidth * 2.0)
+                else if (scrollView.contentOffset.x >= scrollWidth * 2.0)
                 {
                     previousContentOffset.x -= scrollWidth;
-                    setContentOffsetWithoutEvent(CGPointMake(scrollView!.contentOffset.x - scrollWidth, 0.0))
+                    setContentOffsetWithoutEvent(CGPoint(x: scrollView.contentOffset.x - scrollWidth, y: 0.0))
                 }
                 scrollOffset = clampedOffset(scrollOffset)
             }
         }
-        if (vertical && fabs(scrollView!.contentOffset.x) > 0.0001)
+        if (vertical && fabs(scrollView.contentOffset.x) > 0.0001)
         {
-            setContentOffsetWithoutEvent(CGPointMake(0.0, scrollView!.contentOffset.y))
+            setContentOffsetWithoutEvent(CGPoint(x: 0.0, y: scrollView.contentOffset.y))
         }
-        else if (!vertical && fabs(scrollView!.contentOffset.y) > 0.0001)
+        else if (!vertical && fabs(scrollView.contentOffset.y) > 0.0001)
         {
-            setContentOffsetWithoutEvent(CGPointMake(scrollView!.contentOffset.x, 0.0))
+            setContentOffsetWithoutEvent(CGPoint(x: scrollView.contentOffset.x, y: 0.0))
         }
     }
 
     func updateScrollViewDimensions () {
-        assert(scrollView != nil)
+        
         var frame = self.bounds
         var contentSize = frame.size
         
         if (vertical)
         {
-            contentSize.width -= (scrollView!.contentInset.left + scrollView!.contentInset.right);
+            contentSize.width -= (scrollView.contentInset.left + scrollView.contentInset.right);
         }
         else
         {
-            contentSize.height -= (scrollView!.contentInset.top + scrollView!.contentInset.bottom);
+            contentSize.height -= (scrollView.contentInset.top + scrollView.contentInset.bottom);
         }
         
         
@@ -427,26 +413,26 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
         case .Center:
             if (vertical)
             {
-                frame = CGRectMake(0.0, (self.bounds.size.height - itemSize.height * CGFloat(itemsPerPage))/2.0,
-                    self.bounds.size.width, itemSize.height * CGFloat(itemsPerPage))
+                frame = CGRect(x:0.0, y:(self.bounds.size.height - itemSize.height * CGFloat(itemsPerPage))/2.0,
+                    width:self.bounds.size.width, height:itemSize.height * CGFloat(itemsPerPage))
                 contentSize.height = itemSize.height * CGFloat(numberOfItems)
             }
             else
             {
-                frame = CGRectMake((self.bounds.size.width - itemSize.width * CGFloat(itemsPerPage))/2.0,
-                    0.0, itemSize.width * CGFloat(itemsPerPage), self.bounds.size.height);
+                frame = CGRect(x: (self.bounds.size.width - itemSize.width * CGFloat(itemsPerPage))/2.0,
+                    y: 0.0, width: itemSize.width * CGFloat(itemsPerPage), height: self.bounds.size.height);
                 contentSize.width = itemSize.width * CGFloat(numberOfItems)
             }
             
         case .Edge:
             if (vertical)
             {
-                frame = CGRectMake(0.0, 0.0, self.bounds.size.width, itemSize.height * CGFloat(itemsPerPage))
+                frame = CGRect(x: 0.0, y: 0.0, width: self.bounds.size.width, height: itemSize.height * CGFloat(itemsPerPage))
                 contentSize.height = itemSize.height * CGFloat(numberOfItems) - (self.bounds.size.height - frame.size.height);
             }
             else
             {
-                frame = CGRectMake(0.0, 0.0, itemSize.width * CGFloat(itemsPerPage), self.bounds.size.height);
+                frame = CGRect(x: 0.0, y: 0.0, width: itemSize.width * CGFloat(itemsPerPage), height: self.bounds.size.height);
                 contentSize.width = itemSize.width * CGFloat(numberOfItems) - (self.bounds.size.width - frame.size.width)
             }
         }
@@ -475,19 +461,19 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
             }
         }
         
-        if (!CGRectEqualToRect(scrollView!.frame, frame))
+        if (!CGRectEqualToRect(scrollView.frame, frame))
         {
-            scrollView!.frame = frame;
+            scrollView.frame = frame;
         }
         
-        if (!CGSizeEqualToSize(scrollView!.contentSize, contentSize))
+        if (!CGSizeEqualToSize(scrollView.contentSize, contentSize))
         {
-            scrollView!.contentSize = contentSize;
+            scrollView.contentSize = contentSize;
         }
     }
 
     func offsetForItemAtIndex(index:Int) -> CGFloat {
-        assert(scrollView != nil)
+        
         //calculate relative position
         var offset = CGFloat(index) - scrollOffset
         if (wrapEnabled) {
@@ -500,7 +486,7 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
                 }
             } else {
                 let width = vertical ? self.bounds.size.height : self.bounds.size.width
-                let x = vertical ? scrollView!.frame.origin.y : scrollView!.frame.origin.x
+                let x = vertical ? scrollView.frame.origin.y : scrollView.frame.origin.x
                 let itemWidth = vertical ? itemSize.height : itemSize.width
                 if (offset * itemWidth + x > width) {
                     offset -= CGFloat(numberOfItems)
@@ -514,13 +500,13 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
     }
 
     func setFrameForView(view: UIView, atIndex index:Int) {
-        assert(scrollView != nil)
+        
         if ((self.window) != nil) {
             var center = view.center
             if (vertical) {
-                center.y = (offsetForItemAtIndex(index) + 0.5) * itemSize.height + scrollView!.contentOffset.y;
+                center.y = (offsetForItemAtIndex(index) + 0.5) * itemSize.height + scrollView.contentOffset.y;
             } else {
-                center.x = (offsetForItemAtIndex(index) + 0.5) * itemSize.width + scrollView!.contentOffset.x;
+                center.x = (offsetForItemAtIndex(index) + 0.5) * itemSize.width + scrollView.contentOffset.x;
             }
             
             let disableAnimation = !CGPointEqualToPoint(center, view.center)
@@ -529,12 +515,12 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
                 UIView.setAnimationsEnabled(false)
             }
             if (vertical) {
-                view.center = CGPointMake(scrollView!.frame.size.width/2.0, center.y)
+                view.center = CGPoint(x: scrollView.frame.size.width/2.0, y: center.y)
             } else {
-                view.center = CGPointMake(center.x, scrollView!.frame.size.height/2.0)
+                view.center = CGPoint(x: center.x, y: scrollView.frame.size.height/2.0)
             }
             
-            view.bounds = CGRectMake(0.0, 0.0, itemSize.width, itemSize.height)
+            view.bounds = CGRect(x: 0.0, y: 0.0, width: itemSize.width, height: itemSize.height)
             
             if (disableAnimation && animationEnabled) {
                 UIView.setAnimationsEnabled(true)
@@ -615,7 +601,7 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
     }
     
     func step() {
-        assert(scrollView != nil)
+        
         let currentTime = CFAbsoluteTimeGetCurrent()
         var delta = CGFloat(lastTime - currentTime)
         self.lastTime = currentTime
@@ -625,9 +611,9 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
             delta = easeInOut(time)
             scrollOffset = clampedOffset(startOffset + (endOffset - startOffset) * delta)
             if (vertical) {
-                setContentOffsetWithoutEvent(CGPointMake(0.0, scrollOffset * itemSize.height))
+                setContentOffsetWithoutEvent(CGPoint(x: 0.0, y: scrollOffset * itemSize.height))
             } else {
-                setContentOffsetWithoutEvent(CGPointMake(scrollOffset * itemSize.width, 0.0))
+                setContentOffsetWithoutEvent(CGPoint(x: scrollOffset * itemSize.width, y: 0.0))
             }
             didScroll()
             if (time == 1.0) {
@@ -636,7 +622,7 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
                 delegate?.swipeViewDidEndScrollingAnimation?(self)
             }
         } else if (autoscroll != 0.0) {
-            if (!scrollView!.dragging) {
+            if (!scrollView.dragging) {
                 self.scrollOffset = clampedOffset(scrollOffset + delta * autoscroll)
             }
         } else {
@@ -686,15 +672,15 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
     }
 
     func setContentOffsetWithoutEvent(contentOffset:CGPoint) {
-        assert(scrollView != nil)
-        if (!CGPointEqualToPoint(scrollView!.contentOffset, contentOffset))
+        
+        if (!CGPointEqualToPoint(scrollView.contentOffset, contentOffset))
         {
             let animationEnabled = UIView.areAnimationsEnabled()
             if (animationEnabled) {
                 UIView.setAnimationsEnabled(false)
             }
             suppressScrollEvent = true
-            scrollView!.contentOffset = contentOffset
+            scrollView.contentOffset = contentOffset
             suppressScrollEvent = false
             if (animationEnabled) {
                 UIView.setAnimationsEnabled(true)
@@ -757,8 +743,8 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
             updateScrollViewDimensions()
             updateLayout()
             let contentOffset = vertical
-                ? CGPointMake(0.0, clampedOffset(scrollOffset) * itemSize.height)
-                : CGPointMake(clampedOffset(scrollOffset) * itemSize.width, 0.0)
+                ? CGPoint(x: 0.0, y: clampedOffset(scrollOffset) * itemSize.height)
+                : CGPoint(x: clampedOffset(scrollOffset) * itemSize.width, y: 0.0)
             setContentOffsetWithoutEvent(contentOffset)
             didScroll()
         }
@@ -830,7 +816,7 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
         setItemView(view!, forIndex:index)
         setFrameForView(view!, atIndex:index)
         view!.userInteractionEnabled = true
-        scrollView?.addSubview(view!)
+        scrollView.addSubview(view!)
         
         return view!;
     }
@@ -842,11 +828,11 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
         //get item size
         let size = delegate?.swipeViewItemSize?(self)
         if (!CGSizeEqualToSize(size!, CGSizeZero)) {
-            itemSize = size!;
+            itemSize = size!
         } else if (numberOfItems > 0) {
             if self.visibleItemViews().count <= 0 {
                 let view = dataSource?.viewForItemAtIndex(0, swipeView: self, reusingView: dequeueItemView())
-                itemSize = view!.frame.size;
+                itemSize = view!.frame.size
             }
         }
         
@@ -856,13 +842,13 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
     }
     
     func loadUnloadViews() {
-        assert(scrollView != nil)
+        
         //check that item size is known
         let itemWidth = vertical ? itemSize.height : itemSize.width
         if (itemWidth != 0) {
             //calculate offset and bounds
             let width = vertical ? self.bounds.size.height : self.bounds.size.width
-            let x = vertical ? scrollView!.frame.origin.y : scrollView!.frame.origin.x
+            let x = vertical ? scrollView.frame.origin.y : scrollView.frame.origin.x
             
             //calculate range
             let startOffset = clampedOffset(scrollOffset - x / itemWidth)
@@ -937,22 +923,22 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
     }
     
     override func hitTest(point: CGPoint, withEvent event:UIEvent?) -> UIView? {
-        assert(scrollView != nil)
+        
         var view = super.hitTest(point, withEvent:event)
         if (view == nil) {
             return view
         }
         if (view!.isEqual(self)) {
-            for subview in scrollView!.subviews {
-                let offset = CGPointMake(point.x - scrollView!.frame.origin.x + scrollView!.contentOffset.x - subview.frame.origin.x,
-                    point.y - scrollView!.frame.origin.y + scrollView!.contentOffset.y - subview.frame.origin.y);
+            for subview in scrollView.subviews {
+                let offset = CGPoint(x: point.x - scrollView.frame.origin.x + scrollView.contentOffset.x - subview.frame.origin.x,
+                    y: point.y - scrollView.frame.origin.y + scrollView.contentOffset.y - subview.frame.origin.y);
                 view = subview.hitTest(offset, withEvent:event)
                 if (view != nil)
                 {
                     return view;
                 }
             }
-            return scrollView!;
+            return scrollView;
         }
         return view;
     }
@@ -971,8 +957,8 @@ class SwipeView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
     //MARK: - Gestures and taps
     
     func viewOrSuperviewIndex(view: UIView) -> Int? {
-        assert(scrollView != nil)
-        if (view == scrollView!) {
+        
+        if (view == scrollView) {
             return nil
         }
         let index = self.indexOfItemView(view)

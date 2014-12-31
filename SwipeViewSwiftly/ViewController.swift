@@ -2,7 +2,7 @@
 ViewController.swift
 SwipeViewSwiftly
 
-Version 1.0, December 27, 2014
+Version 1.1, December 30, 2014
 Adapted for Swift by David Hirsch on 12/27/14 from:
 SwipeView 1.3.2 ( https://github.com/nicklockwood/SwipeView )
 
@@ -30,9 +30,9 @@ class ViewController: UIViewController, SwipeViewDataSource, SwipeViewDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
-        swipeView.setDelegate(self)
-        swipeView.setDataSource(self)
-        swipeView.setPagingEnabled(true)
+        swipeView.delegate=self
+        swipeView.dataSource=self
+        swipeView.pagingEnabled=true
     }
     
     override func didReceiveMemoryWarning() {
