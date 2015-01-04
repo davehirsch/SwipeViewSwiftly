@@ -263,6 +263,10 @@ If you wish to detect other types of interaction such as swipes, double taps or 
 Release Notes
 ----------------
 
+Version 1.2
+
+- Made programmatic scrolling work
+
 Version 1.1
 
 - Changed setter-functions into property observers
